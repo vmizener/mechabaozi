@@ -6,5 +6,5 @@ class Basic:
         self.bot = bot
 
     @commands.command(pass_context=True, no_pm=True)
-    async def help(self):
+    async def help(self, ctx):
         await self.bot.say('hey')

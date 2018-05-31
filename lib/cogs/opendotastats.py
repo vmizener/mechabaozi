@@ -33,12 +33,17 @@ class OpenDotaStats:
     def request(self, method, url):
         return json.loads(requests.request(method, url).text)
 
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(pass_context=True, no_pm=False)
     async def lastmatch(self, ctx, player=''):
-        if player and player in self.player_dict:
+        if not player:
+            player = ctx.message.author.display_name
+        try:
             player_id = self.player_dict[player]
-        else:
-            player_id = 34187420
+        except KeyError:
+            msg = 'i don\'t know this "{}" guy.'.format(player)
+            await self.bot.say(msg)
+            return
+            
         j = self.request('GET', BASE_PATH + '/players/{}/recentMatches'.format(player_id))[0]
         hero = self.hero_dict[str(j['hero_id'])]['localized_name'].lower()
         team = 'Radiant' if j['player_slot'] < 128 else 'Dire'

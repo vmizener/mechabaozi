@@ -1,13 +1,14 @@
 import json
 import logging
+import time
 
 from config import COMMAND_PREFIX
 from config import CLIENT_INFO_PATH
 
 from discord.ext import commands
 
-from cogs.interactions import Interactions
-from cogs.opendotastats import OpenDotaStats
+from lib.cogs.interactions import Interactions
+from lib.cogs.opendotastats import OpenDotaStats
 
 class MechaBaozi:
     def __init__(self):
@@ -45,5 +46,13 @@ class MechaBaozi:
         self.bot.run(self.token)
 
 if __name__ == '__main__':
+    log_path = '/var/tmp/{}.{}.discord.log'.format(__name__, time.strftime('%Y%m%d-%H%M%S'))
+    logger_handler = logging.FileHandler(log_path)
+    logger_formatter = logging.Formatter('//@%(asctime)s [%(levelname)s]\n%(message)s')
+    logger_handler.setFormatter(logger_formatter)
+    logger = logging.getLogger(__name__)
+    logger.addHandler(logger_handler)
+    logger.setLevel(logging.DEBUG)
+
     mb = MechaBaozi()
     mb.run()

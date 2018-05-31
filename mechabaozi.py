@@ -8,7 +8,7 @@ from config import LOGPATH
 
 from discord.ext import commands
 
-from lib.cogs.interactions import Interactions
+from lib.cogs.interactions import SocialInteractions
 from lib.cogs.opendotastats import OpenDotaStats
 
 class MechaBaozi:
@@ -28,7 +28,7 @@ class MechaBaozi:
             self.logger.info('Logged in as: {}'.format(bot.user.name))
 
         self.logger.debug('Adding cogs.')
-        bot.add_cog(Interactions(bot))
+        bot.add_cog(SocialInteractions(bot))
         bot.add_cog(OpenDotaStats(bot))
 
         self.bot = bot

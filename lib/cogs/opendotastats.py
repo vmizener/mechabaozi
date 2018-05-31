@@ -35,6 +35,9 @@ class OpenDotaStats:
 
     @commands.command(pass_context=True, no_pm=False)
     async def lastmatch(self, ctx, player=''):
+        """
+        the future is now
+        """
         if not player:
             player = ctx.message.author.display_name
         try:
@@ -43,7 +46,7 @@ class OpenDotaStats:
             msg = 'i don\'t know this "{}" guy.'.format(player)
             await self.bot.say(msg)
             return
-            
+
         j = self.request('GET', BASE_PATH + '/players/{}/recentMatches'.format(player_id))[0]
         hero = self.hero_dict[str(j['hero_id'])]['localized_name'].lower()
         team = 'Radiant' if j['player_slot'] < 128 else 'Dire'

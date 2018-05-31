@@ -5,6 +5,6 @@ class Interactions:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(pass_context=True)
     async def hi(self, ctx):
         await self.bot.say('hey')

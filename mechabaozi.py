@@ -4,6 +4,7 @@ import time
 
 from config import COMMAND_PREFIX
 from config import CLIENT_INFO_PATH
+from config import LOGPATH
 
 from discord.ext import commands
 
@@ -46,7 +47,7 @@ class MechaBaozi:
         self.bot.run(self.token)
 
 if __name__ == '__main__':
-    log_path = '/var/tmp/{}.{}.discord.log'.format(__name__, time.strftime('%Y%m%d-%H%M%S'))
+    log_path = '{}/{}.{}.discord.log'.format(LOGPATH, __name__, time.strftime('%Y%m%d-%H%M%S'))
     logger_handler = logging.FileHandler(log_path)
     logger_formatter = logging.Formatter('//@%(asctime)s [%(levelname)s]\n%(message)s')
     logger_handler.setFormatter(logger_formatter)

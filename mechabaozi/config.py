@@ -8,5 +8,5 @@ if not os.path.exists(LOGPATH):
 
 fabspath = os.path.abspath(os.path.dirname(__file__))
 CLIENT_INFO_PATH = os.path.join(fabspath, 'data/client_info.json')
-HERO_INFO_PATH = os.path.join(fabspath, 'data/dotaconstants/build/heroes.json')
+HERO_INFO_PATH = os.path.join(fabspath, '..', 'include/dotaconstants/build/heroes.json')
 PLAYER_INFO_PATH = os.path.join(fabspath, 'data/stats_playerids.csv')

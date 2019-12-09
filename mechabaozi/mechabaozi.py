@@ -1,10 +1,8 @@
 import json
 import logging
-import time
 
 from config import COMMAND_PREFIX
 from config import CLIENT_INFO_PATH
-from config import LOGPATH
 
 from discord.ext import commands
 
@@ -31,29 +29,17 @@ class MechaBaozi:
         bot.add_cog(SocialInteractions(bot))
         bot.add_cog(OpenDotaStats(bot))
 
+        self.logger.debug('Reading client info @ {}'.format(CLIENT_INFO_PATH))
+        with open(CLIENT_INFO_PATH, 'r') as file_handle:
+            json_dict = json.load(file_handle)
+            self.logger.debug(json.dumps(json_dict))
+            self.client_id = json_dict['client_id']
+            self.token = json_dict['client_token']
+            self.logger.debug(f'Token set: {self.token}.')
+
         self.bot = bot
         self.logger.info('Initialization completed.')
 
     def run(self):
-        self.logger.debug('Reading client info @ {}'.format(CLIENT_INFO_PATH))
-        with open(CLIENT_INFO_PATH, 'r') as fh:
-            j = json.load(fh)
-            self.logger.debug(json.dumps(j))
-            self.client_id = j['client_id']
-            self.token = j['client_token']
-            self.logger.debug('Token set: {}.'.format(self.token))
-
         self.logger.info('Activating bot.')
         self.bot.run(self.token)
-
-if __name__ == '__main__':
-    log_path = '{}/{}.{}.discord.log'.format(LOGPATH, __name__, time.strftime('%Y%m%d-%H%M%S'))
-    logger_handler = logging.FileHandler(log_path)
-    logger_formatter = logging.Formatter('//@%(asctime)s [%(levelname)s]\n%(message)s')
-    logger_handler.setFormatter(logger_formatter)
-    logger = logging.getLogger(__name__)
-    logger.addHandler(logger_handler)
-    logger.setLevel(logging.DEBUG)
-
-    mb = MechaBaozi()
-    mb.run()

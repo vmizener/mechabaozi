@@ -1,0 +1,5 @@
+SCRIPTS_PATH=./scripts
+VENV_PATH=./venv
+
+ACTIVATE_ENV_PATH=${SCRIPTS_PATH}/env
+

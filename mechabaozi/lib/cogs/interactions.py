@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-class SocialInteractions:
+class SocialInteractions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -10,4 +10,4 @@ class SocialInteractions:
         """
         🏓 Ping pong 🏓
         """
-        await self.bot.say('hey')
+        await ctx.send('hey')

@@ -6,10 +6,11 @@ import requests
 
 from discord.ext import commands
 
-from config import HERO_INFO_PATH
-from config import PLAYER_INFO_PATH
+from ..globals import HERO_INFO_PATH
+from ..globals import PLAYER_INFO_PATH
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
+
 
 class OpenDotaStats(commands.Cog):
     def __init__(self, bot):
@@ -38,8 +39,8 @@ class OpenDotaStats(commands.Cog):
         except KeyError:
             msg = f'i don\'t know this "{player_name}" guy.'
 
-    @commands.command(pass_context=True, no_pm=False)
-    async def lastmatch(self, ctx, player=''):
+    @commands.command()
+    async def lastmatch(self, ctx, player=None):
         """
         the future is now
         """

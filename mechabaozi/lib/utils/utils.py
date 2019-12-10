@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 
-def CsvManager:
+class CsvManager:
     def __init__(self, csvpath):
         self.logger = logging.getLogger(__name__)
         self._path = csvpath

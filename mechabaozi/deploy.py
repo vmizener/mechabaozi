@@ -1,11 +1,14 @@
+#!/usr/bin/env python3
+
 import code
 import logging
 import sys
 import time
 
-from config import LOGPATH
+from lib.globals import LOGPATH
 
 from mechabaozi import MechaBaozi
+
 
 def main():
     log_path = f'{LOGPATH}/{time.strftime("%Y%m%d-%H%M%S")}.discord.log'

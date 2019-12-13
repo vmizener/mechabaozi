@@ -1,6 +1,7 @@
 import os
 
 COMMAND_PREFIX = '!'
+COMMAND_DEBUG_REACTION = '❔'
 BOT_DESCRIPTION = 'Baozi of the less edible variety'
 STARTUP_EXTENSIONS = [
     'lib.cogs.owner',

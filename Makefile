@@ -23,9 +23,11 @@ install:
 	@$(INSTALL_SCRIPT)
 
 deploy: check-venv
+	@echo "Deploying."
 	@( \
 		source $(ENV_SCRIPT) &>/dev/null; \
-		echo "eh?"; \
+		cd $${SRC_PATH}; \
+		(./$${DEPLOY_SCRIPT} &); \
 	)
 	@echo "Successfully deployed discord bot."
 
@@ -33,6 +35,5 @@ deploy: check-venv
 # Advanced commands
 
 check-venv:
-	# Exit if we fail to source the virtual environment
 	@source $(ENV_SCRIPT) &>/dev/null || (echo "Env validation failed!  Check your installation!"; exit 1)
 

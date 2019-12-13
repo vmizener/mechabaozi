@@ -8,7 +8,7 @@ fi
 source scripts/config
 
 if [ ! -d ${VENV_PATH} ]; then
-    echo >&2 "Failed to find dashboard virtual environment '${VENV_PATH}'; run initial setup first!"
+    echo >&2 "Failed to find virtual environment '${VENV_PATH}'; run initial setup first!"
     return 1
 fi
 

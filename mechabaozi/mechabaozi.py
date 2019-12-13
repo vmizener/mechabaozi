@@ -1,12 +1,13 @@
+import discord
 import json
 import logging
 
 from discord.ext import commands
 
-from lib.cogs.interactions import SocialInteractions
-from lib.cogs.opendotastats import OpenDotaStats
 from lib.globals import COMMAND_PREFIX
+from lib.globals import BOT_DESCRIPTION
 from lib.globals import CLIENT_INFO_PATH
+from lib.globals import STARTUP_EXTENSIONS
 
 class MechaBaozi:
     def __init__(self):
@@ -18,21 +19,24 @@ class MechaBaozi:
 
         description = 'Baozi of the less edible variety.'
         bot = commands.Bot(
-            description=description,
+            description=BOT_DESCRIPTION,
             command_prefix=COMMAND_PREFIX,
-            pm_help=False,
         )
         self.logger.debug('Bot instantiated.')
 
         @bot.event
         async def on_ready():
-            self.logger.info(f'Logged in as: {bot.user.name}')
+            self.logger.info(f'Logged in as: {bot.user.name}#{bot.user.id}')
+            self.logger.info(f'Version: {discord.__version__}')
+            server_strings = '\n'.join([f'- {s.name}::{s.id}' for s in bot.guilds])
+            self.logger.info(f'Running on {len(bot.guilds)} servers:\n{server_strings}')
 
-        self.logger.debug('Adding cogs.')
-        bot.add_cog(SocialInteractions(bot))
-        bot.add_cog(OpenDotaStats(bot))
+        self.logger.info('Loading extensions:')
+        for extension_import_path in STARTUP_EXTENSIONS:
+            bot.load_extension(extension_import_path)
+            self.logger.info(f'- {extension_import_path}')
 
-        self.logger.debug(f'Reading client info @ {CLIENT_INFO_PATH}')
+        self.logger.info(f'Reading client info @ {CLIENT_INFO_PATH}')
         with open(CLIENT_INFO_PATH, 'r') as file_handle:
             json_dict = json.load(file_handle)
             self.logger.debug(json.dumps(json_dict))
@@ -45,4 +49,4 @@ class MechaBaozi:
 
     def run(self):
         self.logger.info('Activating bot.')
-        self.bot.run(self.token)
+        self.bot.run(self.token, bot=True, reconnect=True)

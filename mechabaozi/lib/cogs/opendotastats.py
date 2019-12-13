@@ -6,13 +6,17 @@ import requests
 
 from discord.ext import commands
 
-from ..globals import HERO_INFO_PATH
-from ..globals import PLAYER_INFO_PATH
+from lib.globals import HERO_INFO_PATH
+from lib.globals import PLAYER_INFO_PATH
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
 
 
-class OpenDotaStats(commands.Cog):
+def setup(bot):
+    bot.add_cog(OpenDotaStatsCog(bot))
+
+
+class OpenDotaStatsCog(commands.Cog, name="OpenDotaStats"):
     def __init__(self, bot):
         self.logger = logging.getLogger(__name__)
         self.bot = bot

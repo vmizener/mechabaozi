@@ -1,6 +1,12 @@
 import os
 
 COMMAND_PREFIX = '!'
+BOT_DESCRIPTION = 'Baozi of the less edible variety'
+STARTUP_EXTENSIONS = [
+    'lib.cogs.owner',
+    'lib.cogs.social',
+    'lib.cogs.opendotastats',
+]
 
 LOGPATH = '/tmp/mechabaozi_logs'
 if not os.path.exists(LOGPATH):

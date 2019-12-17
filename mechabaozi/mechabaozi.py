@@ -3,6 +3,8 @@ import datetime
 import discord
 import json
 import logging
+import sys
+import traceback
 
 from discord.ext import commands
 
@@ -102,6 +104,12 @@ class MechaBaozi:
                     error_embed.add_field(
                         name='Cause',
                         value=f'{exception.__cause__}',
+                        inline=False,
+                    )
+                    fmt_tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
+                    error_embed.add_field(
+                        name='Traceback',
+                        value=f'```{"".join(fmt_tb)}```',
                         inline=False,
                     )
                     await error_message.edit(embed=error_embed)

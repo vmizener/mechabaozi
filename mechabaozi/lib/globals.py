@@ -4,9 +4,10 @@ COMMAND_PREFIX = '!'
 COMMAND_DEBUG_REACTION = '❔'
 BOT_DESCRIPTION = 'Baozi of the less edible variety'
 STARTUP_EXTENSIONS = [
+    'lib.cogs.help',
+    'lib.cogs.opendotastats',
     'lib.cogs.owner',
     'lib.cogs.social',
-    'lib.cogs.opendotastats',
 ]
 
 LOGPATH = '/tmp/mechabaozi_logs'

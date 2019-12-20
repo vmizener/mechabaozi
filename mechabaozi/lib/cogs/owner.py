@@ -48,20 +48,74 @@ class OwnerCog(commands.Cog, name="Owner"):
                 result = await result
         except Exception as err:
             await ctx.send(f'```py\n{type(err).__name__}:{str(err)}```')
-            return
-        await ctx.send(f'```py\n{result}```')
+        else:
+            await ctx.send(f'```py\n{result}```')
 
-    @commands.command(name='reload_config', aliases=['flush', 'flush_config'], hidden=True)
-    @commands.is_owner()
-    async def reload_config(self, ctx):
-        """ Reloads the global config module """
-        importlib.reload(config)
-        await ctx.send('```Successfully reloaded config.```')
-
-    @commands.command(name='quit', aliases=['exit', 'die', 'logout', 'stop'], hidden=True)
+    @commands.command(name='quit', aliases=['exit', 'die', 'logout', 'stop'])
     @commands.is_owner()
     async def quit(self, ctx):
         """ Stops the bot """
         msg = await ctx.send('*Goodbye.*')
         await msg.add_reaction('👋')
         await self.bot.logout()
+
+    # ---------------
+    # Hidden commands
+    # ---------------
+
+    @commands.command(name='load_extension', aliases=['l', 'lo', 'load'], hidden=True)
+    @commands.is_owner()
+    async def load_extension(self, ctx, *, extension: str):
+        """
+        Load the specified bot extension.
+
+        Extension uses import path syntax (e.g. "lib.cogs.owner").
+        """
+        try:
+            self.bot.load_extension(extension)
+        except (AttributeError, ImportError) as err:
+            await ctx.message.add_reaction('👎')
+            await ctx.send(f'```py\nFailed to load {extension}: {type(error).__name__} - {err}\n```')
+        else:
+            await ctx.message.add_reaction('👌')
+
+    @commands.command(name='unload_extension', aliases=['ul', 'unl', 'unload'], hidden=True)
+    @commands.is_owner()
+    async def unload_extension(self, ctx, *, extension: str):
+        """
+        Unload the specified bot extension.
+
+        Extension uses import path syntax (e.g. "lib.cogs.owner").
+        """
+        try:
+            self.bot.unload_extension(extension)
+        except (AttributeError, ImportError) as err:
+            await ctx.message.add_reaction('👎')
+            await ctx.send(f'```py\nFailed to unload {extension}: {type(error).__name__} - {err}\n```')
+        else:
+            await ctx.message.add_reaction('👌')
+
+    @commands.command(name='reload_extension', aliases=['r', 'rl', 'reload'], hidden=True)
+    @commands.is_owner()
+    async def reload_extension(self, ctx, *, extension: str):
+        """
+        Unload, then reload the specified bot extension.
+
+        Extension uses import path syntax (e.g. "lib.cogs.owner").
+        """
+        try:
+            self.bot.unload_extension(extension)
+            self.bot.load_extension(extension)
+        except (AttributeError, ImportError) as err:
+            await ctx.message.add_reaction('👎')
+            await ctx.send(f'```py\nFailed to reload {extension}: {type(error).__name__} - {err}\n```')
+        else:
+            await ctx.message.add_reaction('👌')
+
+    @commands.command(name='flush_config', aliases=['flush'], hidden=True)
+    @commands.is_owner()
+    async def flush_config(self, ctx):
+        """ Reloads the global config module """
+        importlib.reload(config)
+        await ctx.message.add_reaction('👌')
+

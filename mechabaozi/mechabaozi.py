@@ -21,7 +21,6 @@ class MechaBaozi:
         self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing.')
 
-        description = 'Baozi of the less edible variety.'
         bot = commands.Bot(
             description=BOT_DESCRIPTION,
             command_prefix=COMMAND_PREFIX,

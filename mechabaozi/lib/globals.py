@@ -1,8 +1,9 @@
 import os
 
-COMMAND_PREFIX = '!'
-COMMAND_DEBUG_REACTION = '❔'
+
 BOT_DESCRIPTION = 'Baozi of the less edible variety'
+COMMAND_PREFIX = '!'
+COMMAND_DEBUG_REACTION = ':grey_question:'
 STARTUP_EXTENSIONS = [
     'lib.cogs.help',
     'lib.cogs.opendotastats',

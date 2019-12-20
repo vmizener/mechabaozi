@@ -3,6 +3,8 @@ import discord
 
 from discord.ext import commands
 
+from lib.globals import COMMAND_PREFIX
+
 
 def setup(bot):
     bot.remove_command('help')
@@ -14,15 +16,23 @@ class HelpCog(commands.Cog, name="Help"):
         self.bot = bot
 
     @commands.command(name='help', aliases=['man'])
-    async def help(self, ctx, *, command: str=''):
+    async def help(self, ctx, *, keyword: str=''):
         """
-        Help me!
+        Get helpful information on bot cogs and commands.
+
+        Will display help with the following priorities:
+            If `keyword` is empty, all non-hidden commands will be listed, organized by cog.
+            If `keyword` matches a known cog, information about that cog will be displayed, along with its commands.
+            If `keyword` matches a known, non-hidden command, that command's usage will be displayed.
+
+        :kwarg keyword str:     The cog or command name to get help on.  If empty, lists all commands organized by cog.
         """
+        # List all known commands, organized by cog
         if not command:
             help_embed= discord.Embed(
                 title='',
                 timestamp=datetime.datetime.utcnow(),
-                #description=f'```apache\n{", ".join(c.prefixes)}```',
+                description=f'```apache\n{COMMAND_PREFIX}```',
                 color=discord.Color.from_rgb(48, 105, 152),
             )
             help_embed.set_footer(text='All Commands')
@@ -44,5 +54,6 @@ class HelpCog(commands.Cog, name="Help"):
                 )
             await ctx.send(embed=help_embed)
             return
+
         # TODO: rest of this
 

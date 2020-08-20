@@ -6,8 +6,8 @@ import requests
 
 from discord.ext import commands
 
-from lib.globals import HERO_INFO_PATH
-from lib.globals import PLAYER_INFO_PATH
+from lib.globals import HERO_INFO_PATH, PLAYER_INFO_PATH
+from lib.base_cog import BaseCog
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
 
@@ -16,21 +16,23 @@ def setup(bot):
     bot.add_cog(OpenDotaStatsCog(bot))
 
 
-class OpenDotaStatsCog(commands.Cog, name="OpenDotaStats"):
+class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def __init__(self, bot):
-        self.logger = logging.getLogger(__name__)
-        self.bot = bot
+        super().__init__(bot)
         self.player_id_map = {}
         with open(HERO_INFO_PATH, 'r') as fh:
             self.hero_dict = json.load(fh)
         self.refresh_player_id_map()
 
     def refresh_player_id_map(self):
-        with open(PLAYER_INFO_PATH, 'r') as fh:
-            for line in csv.reader(fh):
-                if len(line) > 0:
-                    player_name, player_id = line
-                    self.player_id_map[player_name] = player_id
+        try:
+            with open(PLAYER_INFO_PATH, 'r') as fh:
+                for line in csv.reader(fh):
+                    if len(line) > 0:
+                        player_name, player_id = line
+                        self.player_id_map[player_name] = player_id
+        except FileNotFoundError:
+            open(PLAYER_INFO_PATH, 'w').close()
 
     def api_request(self, method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path

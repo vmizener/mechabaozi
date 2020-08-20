@@ -5,13 +5,14 @@ import inspect
 from discord.ext import commands
 
 import lib.globals as config
+from lib.base_cog import BaseCog
 
 
 def setup(bot):
     bot.add_cog(OwnerCog(bot))
 
 
-class OwnerCog(commands.Cog, name="Owner"):
+class OwnerCog(BaseCog, name="Owner"):
     """
     OwnerCog
 
@@ -21,9 +22,6 @@ class OwnerCog(commands.Cog, name="Owner"):
         - Executing arbitrary code
 
     """
-
-    def __init__(self, bot):
-        self.bot = bot
 
     @commands.command(name='eval', aliases=['debug'])
     @commands.is_owner()

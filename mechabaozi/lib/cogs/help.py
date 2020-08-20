@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 
 from lib.globals import COMMAND_PREFIX
+from lib.base_cog import BaseCog
 
 
 def setup(bot):
@@ -11,11 +12,9 @@ def setup(bot):
     bot.add_cog(HelpCog(bot))
 
 
-class HelpCog(commands.Cog, name="Help"):
-    def __init__(self, bot):
-        self.bot = bot
+class HelpCog(BaseCog, name="Help"):
 
-    @commands.command(name='help', aliases=['man'])
+    @commands.command(name='help')
     async def help(self, ctx, *, keyword: str=''):
         """
         Get helpful information on bot cogs and commands.
@@ -28,7 +27,7 @@ class HelpCog(commands.Cog, name="Help"):
         :kwarg keyword str:     The cog or command name to get help on.  If empty, lists all commands organized by cog.
         """
         # List all known commands, organized by cog
-        if not command:
+        if not keyword:
             help_embed= discord.Embed(
                 title='',
                 timestamp=datetime.datetime.utcnow(),

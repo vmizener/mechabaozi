@@ -5,12 +5,14 @@ certifi==2019.11.28
 chardet==3.0.4
 discord==1.0.1
 discord.py==1.4.1
+gitdb==4.0.5
 gitdb2==2.0.6
-GitPython==3.0.5
+GitPython==3.1.7
 idna==2.8
 multidict==4.6.1
 PyYAML==5.3.1
 requests==2.22.0
+smmap==3.0.4
 smmap2==2.0.5
 urllib3==1.25.7
 websockets==6.0

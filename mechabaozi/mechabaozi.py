@@ -48,10 +48,12 @@ class MechaBaozi:
 
     def register_on_ready(self):
         async def on_ready():
-            self.logger.info(f'Logged in as: {self.bot.user.name}#{self.bot.user.id}')
-            self.logger.info(f'Version: {discord.__version__}')
             server_strings = '\n'.join([f'- {s.name}::{s.id}' for s in self.bot.guilds])
-            self.logger.info(f'Running on {len(self.bot.guilds)} servers:\n{server_strings}')
+            self.logger.info(
+                f'Logged in as: {self.bot.user.name}#{self.bot.user.id}\n'
+                f'Discord API v{discord.__version__}\n'
+                f'Running on {len(self.bot.guilds)} servers:\n{server_strings}'
+            )
         self.bot.event(on_ready)
         self.logger.info('Registered "on_ready" method.')
 

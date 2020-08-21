@@ -47,9 +47,12 @@ class OwnerCog(BaseCog, name="Owner"):
             await ctx.send(msg)
             await ctx.message.add_reaction('👎')
             return
+        response = g.pull()
+        self.logger.info(response)
+        await ctx.send(f'```{response}```')
+        if 'Already' in response:
+            await ctx.message.add_reaction('👌')
         else:
-            g.pull()
-            self.logger.info('Updated local repository')
             await self.reload_extensions(ctx)
 
     # ---------------
@@ -84,11 +87,11 @@ class OwnerCog(BaseCog, name="Owner"):
         else:
             msg = f'{pprint.pformat(result)}'
         self.logger.info(msg)
-        if len(msg) >= CONFIG.MAX_MESSAGE_LENGTH:
-            msg = f'```py\n{msg[:CONFIG.MAX_MESSAGE_LENGTH]}\n...```\nMESSAGE TRUNCATED; SEE LOG FOR FULL RESPONSE'
-        else:
-            msg = f'```py\n{msg}```'
-        await ctx.send(msg)
+        p = commands.Paginator(prefix='```py')
+        for line in msg.split('\n'):
+            p.add_line(line)
+        for page in p.pages:
+            await ctx.send(page)
 
     @commands.command(name='load_extension', aliases=['load'], hidden=True)
     @commands.is_owner()

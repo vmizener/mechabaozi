@@ -8,13 +8,15 @@ from lib.base_cog import BaseCog
 
 
 def setup(bot):
-    bot.remove_command('help')
     bot.add_cog(HelpCog(bot))
 
 
 class HelpCog(BaseCog, name="Help"):
 
-    @commands.command(name='help')
+    def __init__(self, bot):
+        bot.help_command = BetterHelpCommand()
+
+    #@commands.command(name='help')
     async def help(self, ctx, *, keyword: str=''):
         """
         Get helpful information on bot cogs and commands.
@@ -26,6 +28,8 @@ class HelpCog(BaseCog, name="Help"):
 
         :kwarg keyword str:     The cog or command name to get help on.  If empty, lists all commands organized by cog.
         """
+        destination = ctx.message.author if self.bot.pm_help else ctx.message.channel
+
         # List all known commands, organized by cog
         if not keyword:
             help_embed= discord.Embed(
@@ -56,3 +60,5 @@ class HelpCog(BaseCog, name="Help"):
 
         # TODO: rest of this
 
+class BetterHelpCommand(commands.MinimalHelpCommand):
+    pass

@@ -28,6 +28,7 @@ class MechaBaozi:
         bot = commands.Bot(
             description=BOT_DESCRIPTION,
             command_prefix=COMMAND_PREFIX,
+            help_command=None,
         )
         self.bot = bot
         self.logger.info('Bot spawned.')

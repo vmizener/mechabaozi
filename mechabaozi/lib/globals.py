@@ -11,8 +11,6 @@ STARTUP_EXTENSIONS = [
     'lib.cogs.social',
 ]
 
-MAX_MESSAGE_LENGTH = 1800
-
 LOGPATH = '/tmp/mechabaozi_logs'
 if not os.path.exists(LOGPATH):
     os.makedirs(LOGPATH)

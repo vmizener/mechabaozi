@@ -36,7 +36,7 @@ class OwnerCog(BaseCog, name="Owner"):
         await self.bot.logout()
         self.logger.info('Successfully disconnected')
 
-    @commands.command(name='update')
+    @commands.command(name='update', aliases=['up'])
     @commands.is_owner()
     async def update(self, ctx):
         """ Updates the bot environment and reloads it """
@@ -90,7 +90,7 @@ class OwnerCog(BaseCog, name="Owner"):
             msg = f'```py\n{msg}```'
         await ctx.send(msg)
 
-    @commands.command(name='load_extension', aliases=['l', 'lo', 'load'], hidden=True)
+    @commands.command(name='load_extension', aliases=['load'], hidden=True)
     @commands.is_owner()
     async def load_extension(self, ctx, *, extension: str):
         """
@@ -109,7 +109,7 @@ class OwnerCog(BaseCog, name="Owner"):
             self.logger.info(f'Loaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
-    @commands.command(name='unload_extension', aliases=['ul', 'unl', 'unload'], hidden=True)
+    @commands.command(name='unload_extension', aliases=['unload'], hidden=True)
     @commands.is_owner()
     async def unload_extension(self, ctx, *, extension: str):
         """

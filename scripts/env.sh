@@ -5,7 +5,7 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
     exit 1
 fi
 
-source scripts/config
+source scripts/config.sh
 
 if [ ! -d ${VENV_PATH} ]; then
     echo >&2 "Failed to find virtual environment '${VENV_PATH}'; run initial setup first!"

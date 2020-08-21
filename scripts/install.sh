@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source scripts/config
+source scripts/config.sh
 
 ############################
 # Create Virtual Environment

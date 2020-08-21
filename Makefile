@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 
 INSTALL_SCRIPT = ./scripts/install.sh
-ENV_SCRIPT = ./scripts/env
+ENV_SCRIPT = ./scripts/env.sh
 
 .PHONY: help install deploy check-venv
 

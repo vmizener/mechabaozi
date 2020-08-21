@@ -2,11 +2,12 @@ import discord
 import git
 import importlib
 import inspect
+import pprint
 import traceback
 
 from discord.ext import commands
 
-import lib.globals as config
+import lib.globals as CONFIG
 from lib.base_cog import BaseCog
 
 
@@ -25,39 +26,6 @@ class OwnerCog(BaseCog, name="Owner"):
 
     """
 
-    @commands.command(name='eval', aliases=['debug'])
-    @commands.is_owner()
-    async def eval(self, ctx, *, code: str):
-        """
-        Evaluates input code and outputs the result.
-        """
-        code = code.strip('` ')
-        channel = ctx.message.channel
-        author = ctx.message.author
-        self.logger.info(f'Parsed debug request from {author}@{channel}:\n"""{code}"""')
-        env = {
-            'bot':      self.bot,
-            'ctx':      ctx,
-            'message':  ctx.message,
-            'server':   ctx.guild,
-            'channel':  channel,
-            'author':   author,
-        }.update(globals())
-
-        result = None
-        try:
-            result = eval(code, env)
-            if inspect.isawaitable(result):
-                result = await result
-        except Exception as err:
-            fmt_tb = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            err_msg = f'{type(err).__name__}: {str(err)}\n{fmt_tb}'
-            await ctx.send(f'```py\n{err_msg}```')
-            self.logger.info(err_msg)
-        else:
-            await ctx.send(f'```py\n{result}```')
-            self.logger.info(f'Result:\n"""{result}"""')
-
     @commands.command(name='quit', aliases=['exit'])
     @commands.is_owner()
     async def quit(self, ctx):
@@ -71,12 +39,56 @@ class OwnerCog(BaseCog, name="Owner"):
     @commands.command(name='update')
     @commands.is_owner()
     async def update(self, ctx):
-        """ Updates the bot, then restarts it """
-        pass
+        """ Updates the bot environment and reloads it """
+        g = git.Git('.')
+        if len(out := g.status('--porcelain')) > 0:
+            msg = f'Bot environment is not in a clean state!  Cannot automatically update!\n```{out}```'
+            self.logger.error(msg)
+            await ctx.send(msg)
+            await ctx.message.add_reaction('👎')
+            return
+        else:
+            g.pull()
+            self.logger.info('Updated local repository')
+            self.reload_extensions(ctx)
 
     # ---------------
     # Hidden commands
     # ---------------
+
+    @commands.command(name='eval', aliases=['debug'], hidden=True)
+    @commands.is_owner()
+    async def eval(self, ctx, *, code: str):
+        """
+        Evaluates input code and outputs the result.
+        """
+        code = code.strip('` ')
+        channel = ctx.message.channel
+        author = ctx.message.author
+        self.logger.info(f'Parsed debug request from "{author}" @ "{channel}":\n"""{code}"""')
+        env = {
+            'bot':      self.bot,
+            'ctx':      ctx,
+            'channel':  channel,
+            'author':   author,
+        }
+        env.update(globals())
+
+        result = None
+        try:
+            result = eval(code, env)
+            if inspect.isawaitable(result):
+                result = await result
+        except Exception as exception:
+            msg = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+        else:
+            msg = f'{pprint.pformat(result)}'
+        self.logger.info(msg)
+        if len(msg) >= CONFIG.MAX_MESSAGE_LENGTH:
+            msg = f'```py\n{msg[:CONFIG.MAX_MESSAGE_LENGTH]}\n...```\nMESSAGE TRUNCATED; SEE LOG FOR FULL RESPONSE'
+        else:
+            msg = f'```py\n{msg}```'
+        await ctx.send(msg)
 
     @commands.command(name='load_extension', aliases=['l', 'lo', 'load'], hidden=True)
     @commands.is_owner()
@@ -90,8 +102,11 @@ class OwnerCog(BaseCog, name="Owner"):
             self.bot.load_extension(extension)
         except (AttributeError, ImportError) as err:
             await ctx.message.add_reaction('👎')
-            await ctx.send(f'```py\nFailed to load {extension}: {type(error).__name__} - {err}\n```')
+            msg = f'Failed to load {extension}: {type(error).__name__} - {err}'
+            self.logger.error(msg)
+            await ctx.send(f'```py\n{msg}\n```')
         else:
+            self.logger.info(f'Loaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
     @commands.command(name='unload_extension', aliases=['ul', 'unl', 'unload'], hidden=True)
@@ -106,31 +121,47 @@ class OwnerCog(BaseCog, name="Owner"):
             self.bot.unload_extension(extension)
         except (AttributeError, ImportError) as err:
             await ctx.message.add_reaction('👎')
-            await ctx.send(f'```py\nFailed to unload {extension}: {type(error).__name__} - {err}\n```')
+            msg = f'Failed to unload {extension}: {type(error).__name__} - {err}'
+            self.logger.error(msg)
+            await ctx.send(f'```py\n{msg}\n```')
         else:
+            self.logger.info(f'Unloaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
-    @commands.command(name='reload_extension', aliases=['r', 'rl', 'reload'], hidden=True)
+    @commands.command(name='reload_extensions', aliases=['r', 'rl', 'reload'], hidden=True)
     @commands.is_owner()
-    async def reload_extension(self, ctx, *, extension: str):
+    async def reload_extensions(self, ctx, *, extensions: str=None):
         """
-        Unload, then reload the specified bot extension.
+        Unload, then reload the specified bot extensions, delmited by comma.
 
         Extension uses import path syntax (e.g. "lib.cogs.owner").
         """
-        try:
-            self.bot.unload_extension(extension)
-            self.bot.load_extension(extension)
-        except (AttributeError, ImportError) as err:
-            await ctx.message.add_reaction('👎')
-            await ctx.send(f'```py\nFailed to reload {extension}: {type(error).__name__} - {err}\n```')
+        if extensions is None:
+            self.logger.info('Reloading all extensions')
+            extensions = CONFIG.STARTUP_EXTENSIONS
         else:
-            await ctx.message.add_reaction('👌')
+            extensions = [extension.strip(' ') for extension in extensions.split(',')]
+        fail = False
+        for extension in CONFIG.STARTUP_EXTENSIONS:
+            try:
+                self.bot.unload_extension(extension)
+                self.bot.load_extension(extension)
+            except (AttributeError, ImportError) as err:
+                fail = True
+                msg = f'Failed to reload {extension}: {type(error).__name__} - {err}'
+                self.logger.error(msg)
+                await ctx.send(f'```py\n{msg}\n```')
+            else:
+                self.logger.info(f'Reloaded extension "{extension}"')
+        if fail:
+           await ctx.message.add_reaction('👎')
+        else:
+           await ctx.message.add_reaction('👌')
 
     @commands.command(name='flush_config', aliases=['flush'], hidden=True)
     @commands.is_owner()
     async def flush_config(self, ctx):
         """ Reloads the global config module """
-        importlib.reload(config)
+        importlib.reload(CONFIG)
         await ctx.message.add_reaction('👌')
 

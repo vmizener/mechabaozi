@@ -81,7 +81,7 @@ class MechaBaozi:
                 )
                 error_embed.set_author(
                     name=str(ctx.message.author),
-                    icon_url=str(ctx.message.guild.get_member(ctx.message.author.id).avatar_url),
+                    icon_url=str(ctx.message.author.avatar_url),
                 )
                 error_embed.set_footer(text=str(type(exception).__name__))
                 error_message = await ctx.send(embed=error_embed)

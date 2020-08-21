@@ -50,7 +50,7 @@ class OwnerCog(BaseCog, name="Owner"):
         else:
             g.pull()
             self.logger.info('Updated local repository')
-            self.reload_extensions(ctx)
+            await self.reload_extensions(ctx)
 
     # ---------------
     # Hidden commands

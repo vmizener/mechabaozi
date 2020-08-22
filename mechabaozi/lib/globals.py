@@ -5,7 +5,7 @@ BOT_DESCRIPTION = 'Baozi of the less edible variety'
 COMMAND_PREFIX = '!'
 COMMAND_DEBUG_REACTION = '\N{WHITE QUESTION MARK ORNAMENT}'
 STARTUP_EXTENSIONS = [
-    'lib.cogs.help',
+    'lib.cogs.general',
     'lib.cogs.opendotastats',
     'lib.cogs.owner',
     'lib.cogs.social',

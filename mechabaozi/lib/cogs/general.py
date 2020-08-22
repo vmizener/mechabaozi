@@ -9,10 +9,10 @@ from lib.base_cog import BaseCog
 
 def setup(bot):
     bot.remove_command('help')
-    bot.add_cog(HelpCog(bot))
+    bot.add_cog(GeneralCog(bot))
 
 
-class HelpCog(BaseCog, name="Help"):
+class GeneralCog(BaseCog, name="General"):
 
     @commands.command(name='help')
     async def help(self, ctx, *, keyword=None):
@@ -79,9 +79,8 @@ class HelpCog(BaseCog, name="Help"):
                     value=' | '.join([f'`{alias}`' for alias in command.aliases]),
                 )
         else:
+            # Report unknown input
             help_embed.title = 'Unknown Command'
             help_embed.description = \
                     f'Yo, I dunno what `{keyword}` is.  Use `!help` for available options'
         await ctx.send(embed=help_embed)
-
-        # TODO: rest of this

@@ -25,39 +25,37 @@ class OwnerCog(BaseCog, name="Owner"):
         - Executing arbitrary code
 
     """
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.git = git.Git('.')
 
     @commands.command(name='quit', aliases=['exit'])
     @commands.is_owner()
     async def quit(self, ctx):
         """ Stops the bot """
-        self.logger.info('Disconnecting')
+        self.log.info('Disconnecting')
         msg = await ctx.send('*Goodbye.*')
         await msg.add_reaction('👋')
         await self.bot.logout()
-        self.logger.info('Successfully disconnected')
+        self.log.info('Successfully disconnected')
 
     @commands.command(name='update', aliases=['up'])
     @commands.is_owner()
     async def update(self, ctx):
         """ Updates the bot environment and reloads it """
-        g = git.Git('.')
-        if len(out := g.status('--porcelain')) > 0:
+        if len(out := self.git.status('--porcelain')) > 0:
             msg = f'Bot environment is not in a clean state!  Cannot automatically update!\n```{out}```'
-            self.logger.error(msg)
+            self.log.error(msg)
             await ctx.send(msg)
             await ctx.message.add_reaction('👎')
             return
-        response = g.pull()
-        self.logger.info(response)
+        response = self.git.pull()
+        self.log.info(response)
         await ctx.send(f'```{response}```')
         if 'Already' in response:
             await ctx.message.add_reaction('👌')
         else:
             await self.reload_extensions(ctx)
-
-    # ---------------
-    # Hidden commands
-    # ---------------
 
     @commands.command(name='eval', aliases=['debug'], hidden=True)
     @commands.is_owner()
@@ -68,7 +66,7 @@ class OwnerCog(BaseCog, name="Owner"):
         code = code.strip('` ')
         channel = ctx.message.channel
         author = ctx.message.author
-        self.logger.info(f'Parsed debug request from "{author}" @ "{channel}":\n"""{code}"""')
+        self.log.info(f'Parsed debug request from "{author}" @ "{channel}":\n"""{code}"""')
         env = {
             'bot':      self.bot,
             'ctx':      ctx,
@@ -86,12 +84,36 @@ class OwnerCog(BaseCog, name="Owner"):
             msg = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         else:
             msg = f'{pprint.pformat(result)}'
-        self.logger.info(msg)
+        self.log.info(msg)
         p = commands.Paginator(prefix='```py')
         for line in msg.split('\n'):
             p.add_line(line)
         for page in p.pages:
             await ctx.send(page)
+
+    # ---------------
+    # Git commands
+    # ---------------
+
+    @commands.group(name='git', hidden=True)
+    @commands.is_owner()
+    async def git(self, ctx):
+        """ Invokes git in the bot's local repository """
+        if ctx.invoked_subcommand is None:
+            #await ctx.invoke(self.bot.get_command('git status'))
+            await ctx.invoke(self.bot.get_command('help'), keyword='git')
+
+    @git.group(name='status')
+    @commands.is_owner()
+    async def status(self, ctx):
+        """ Displays the bot's local repository status """
+        out = self.git.status()
+        self.log.info(out)
+        await ctx.send(f'```{out}```')
+
+    # ---------------
+    # Cog state commands
+    # ---------------
 
     @commands.command(name='load_extension', aliases=['load'], hidden=True)
     @commands.is_owner()
@@ -106,10 +128,10 @@ class OwnerCog(BaseCog, name="Owner"):
         except (AttributeError, ImportError) as err:
             await ctx.message.add_reaction('👎')
             msg = f'Failed to load {extension}: {type(error).__name__} - {err}'
-            self.logger.error(msg)
+            self.log.error(msg)
             await ctx.send(f'```py\n{msg}\n```')
         else:
-            self.logger.info(f'Loaded extension "{extension}"')
+            self.log.info(f'Loaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
     @commands.command(name='unload_extension', aliases=['unload'], hidden=True)
@@ -125,10 +147,10 @@ class OwnerCog(BaseCog, name="Owner"):
         except (AttributeError, ImportError) as err:
             await ctx.message.add_reaction('👎')
             msg = f'Failed to unload {extension}: {type(error).__name__} - {err}'
-            self.logger.error(msg)
+            self.log.error(msg)
             await ctx.send(f'```py\n{msg}\n```')
         else:
-            self.logger.info(f'Unloaded extension "{extension}"')
+            self.log.info(f'Unloaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
     @commands.command(name='reload_extensions', aliases=['r', 'rl', 'reload'], hidden=True)
@@ -140,22 +162,21 @@ class OwnerCog(BaseCog, name="Owner"):
         Extension uses import path syntax (e.g. "lib.cogs.owner").
         """
         if extensions is None:
-            self.logger.info('Reloading all extensions')
+            self.log.info('Reloading all extensions')
             extensions = CONFIG.STARTUP_EXTENSIONS
         else:
             extensions = [extension.strip(' ') for extension in extensions.split(',')]
         fail = False
         for extension in CONFIG.STARTUP_EXTENSIONS:
             try:
-                self.bot.unload_extension(extension)
-                self.bot.load_extension(extension)
+                self.bot.reload_extension(extension)
             except (AttributeError, ImportError) as err:
                 fail = True
                 msg = f'Failed to reload {extension}: {type(error).__name__} - {err}'
-                self.logger.error(msg)
+                self.log.error(msg)
                 await ctx.send(f'```py\n{msg}\n```')
             else:
-                self.logger.info(f'Reloaded extension "{extension}"')
+                self.log.info(f'Reloaded extension "{extension}"')
         if fail:
            await ctx.message.add_reaction('👎')
         else:

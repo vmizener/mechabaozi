@@ -14,7 +14,7 @@ def setup(bot):
 
 class GeneralCog(BaseCog, name="General"):
 
-    @commands.command(name='help')
+    @commands.command()
     async def help(self, ctx, *, keyword=None):
         """
         Get helpful information on bot cogs and commands.
@@ -59,9 +59,7 @@ class GeneralCog(BaseCog, name="General"):
             title_str = command.name
             if parent_name := command.full_parent_name:
                 title_str = f'{parent_name} {title_str}'
-            if sig := command.signature:
-                title_str += f' {sig}'
-            help_embed.title = f'`{COMMAND_PREFIX}{title_str}`'
+            help_embed.title = f'`{COMMAND_PREFIX}{title_str}{" "+command.signature if command.signature else ""}`'
             help_embed.set_footer(text=f'help {title_str}')
             help_embed.description = command.help
             if hasattr(command, 'commands') and command.commands:

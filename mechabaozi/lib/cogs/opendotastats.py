@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import datetime
 import discord
 import json
 import requests
@@ -7,10 +8,13 @@ import requests
 from discord.ext import commands
 
 from lib.base_cog import BaseCog
-from lib.globals import COMMAND_PREFIX, COMMAND_REACTION_APPROVE, COMMAND_REACTION_DENY, PLAYER_INFO_PATH
+from lib.globals import \
+        COMMAND_PREFIX, COMMAND_REACTION_APPROVE, COMMAND_REACTION_DENY, COMMAND_REACTION_SUCCESS, \
+        PLAYER_INFO_PATH
 from lib.globals import DOTACONSTANTS
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
+OPEN_DOTA_WEBSITE_PATH = 'https://www.opendota.com'
 
 
 def setup(bot):
@@ -73,7 +77,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             )
         if confirmation:
             self.player_id_map[player_name] = steamid
-            await ctx.message.add_reaction(COMMAND_REACTION_APPROVE)
+            await ctx.message.add_reaction(COMMAND_REACTION_SUCCESS)
 
     @commands.command(aliases=['lookup'])
     async def lookup_players(self, ctx, *player_names):
@@ -90,7 +94,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                 bad_names.append(player_name)
         msg = '\n'.join(player_ids)
         if bad_names:
-            msg += f'\nUnknown name(s): {bad_names}'
+            msg += f'\nUnknown name(s): {bad_names}\nUse `{COMMAND_PREFIX}register to teach me'
         await ctx.send(msg)
 
     @commands.command()
@@ -107,10 +111,25 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             await ctx.send(msg)
             return
 
-        j = self.api_request('GET', '/players/{}/recentMatches'.format(player_id))[0]
-        hero = self.hero_dict[str(j['hero_id'])]['localized_name'].lower()
-        team = 'Radiant' if j['player_slot'] < 128 else 'Dire'
-        if bool(j['radiant_win']) and team == 'Radiant' or not bool(j['radiant_win']) and team == 'Dire':
-            await ctx.send('grats on the w as {}'.format(hero))
+        match_data = self.api_request('GET', '/players/{}/recentMatches'.format(player_id))[0]
+        match_id = match_data['match_id']
+        hero_id = str(match_data['hero_id'])
+        hero = self.hero_dict[hero_id]['localized_name']
+        hero_icon = DOTACONSTANTS.CDN_ADDRESS + self.hero_dict[hero_id]['icon']
+        team = 'Radiant' if match_data['player_slot'] < 128 else 'Dire'
+        duration = str(datetime.timedelta(seconds=match_data['duration']))
+        embed = discord.Embed(
+            timestamp=datetime.datetime.utcnow(),
+            color=discord.Color.dark_blue(),
+            description=f'[OpenDota match link]({OPEN_DOTA_WEBSITE_PATH}/matches/{match_id})',
+        )
+        if bool(match_data['radiant_win']) and team == 'Radiant' or not bool(match_data['radiant_win']) and team == 'Dire':
+            embed.title = f'Victory in {duration} as {hero}'
         else:
-            await ctx.send('feeding as {} yet again'.format(hero))
+            embed.title = f'Defeat in {duration} as {hero}'
+        embed.set_thumbnail(url=hero_icon)
+        embed.add_field(
+            name='KDA',
+            value=f"{match_data['kills']}/{match_data['deaths']}/{match_data['assists']}",
+        )
+        await ctx.send(embed=embed)

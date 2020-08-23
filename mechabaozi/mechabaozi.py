@@ -1,29 +1,53 @@
+#!/usr/bin/env python3
+
 import asyncio
 import datetime
 import discord
-import json
 import logging
 import sys
 import traceback
+import yaml
 
 from discord.ext import commands
 
+from lib.base_cog import BaseCog
 from lib.globals import \
-    COMMAND_PREFIX, BOT_DESCRIPTION,  STARTUP_EXTENSIONS, \
+    COMMAND_PREFIX, CLIENT_CONFIG_PATH, BOT_DESCRIPTION, \
+    LOGFORMAT, LOGPATH,  STARTUP_EXTENSIONS, \
     COMMAND_DEBUG_REACTION
 
 
 class MechaBaozi:
-    def __init__(self, client_token):
-        """
-        HEY WORLD
-        """
-        print("logger:", __name__)
-        self.logger = logging.getLogger(__name__)
-        self.logger.info('Initializing.')
+    def __init__(self, *, client_config_path=CLIENT_CONFIG_PATH, log_level=logging.INFO):
+        self.log = logging.getLogger("mechabaozi")
+        self.log.info('Initializing.')
+
+        log_path = LOGPATH
+        log_formatter = logging.Formatter(LOGFORMAT)
+
+        logfile_handler = logging.FileHandler(log_path)
+        logfile_handler.setFormatter(log_formatter)
+        self.log.addHandler(logfile_handler)
+
+        logstrm_handler = logging.StreamHandler(sys.stdout)
+        logstrm_handler.setFormatter(log_formatter)
+        self.log.addHandler(logstrm_handler)
+
+        self._log_level = None
+        self.log_level = log_level
+        self.log.info('Logging set up successfully')
+
+        self.log.info(f'Reading client config @ {client_config_path}')
+        try:
+            with open(client_config_path, 'r') as file_handle:
+                client_token = yaml.safe_load(file_handle)['client_token']
+            self.log.info('Successfully parsed token')
+        except:
+            # TODO
+            raise
 
         self.token = client_token
-        self.logger.debug(f'Token set: {self.token}.')
+        self.log.debug(f'Token set: {self.token}.')
 
         bot = commands.Bot(
             description=BOT_DESCRIPTION,
@@ -31,37 +55,46 @@ class MechaBaozi:
             help_command=None,
         )
         self.bot = bot
-        self.logger.info('Bot spawned.')
+        self.log.info('Bot spawned.')
 
         self.register_on_ready()
         self.register_on_command_error()
 
-        self.logger.info('Loading extensions:')
+        self.log.info('Loading extensions:')
         for extension_import_path in STARTUP_EXTENSIONS:
             self.bot.load_extension(extension_import_path)
-            self.logger.info(f'- {extension_import_path}')
+            self.log.info(f'- {extension_import_path}')
 
-        self.logger.info('Bot initialized successfully.')
+        self.log.info('Initialization complete')
+
+    @property
+    def log_level(self):
+        return self._log_level
+
+    @log_level.setter
+    def log_level(self, level):
+        self._log_level = level
+        self.log.setLevel(level)
 
     def run(self):
-        self.logger.info('Activating bot.')
+        self.log.info('Activating bot.')
         self.bot.run(self.token, bot=True, reconnect=True)
 
     def register_on_ready(self):
         async def on_ready():
             server_strings = '\n'.join([f'- {s.name}::{s.id}' for s in self.bot.guilds])
-            self.logger.info(
+            self.log.info(
                 f'Logged in as: {self.bot.user.name}#{self.bot.user.id}\n'
                 f'Discord API v{discord.__version__}\n'
                 f'Running on {len(self.bot.guilds)} servers:\n{server_strings}'
             )
         self.bot.event(on_ready)
-        self.logger.info('Registered "on_ready" method.')
+        self.log.info('Registered "on_ready" method.')
 
     def register_on_command_error(self):
         async def on_command_error(ctx, exception):
             fmt_tb = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            self.logger.error(f"Encountered exception:\n\t{exception}\n{fmt_tb}")
+            self.log.error(f"Encountered exception:\n\t{exception}\n{fmt_tb}")
             if isinstance(exception, commands.errors.MissingPermissions):
                 await ctx.send(
                     f"```Oy, {ctx.message.author.name}, you don't have permissions for that.```"
@@ -74,18 +107,12 @@ class MechaBaozi:
                 # TODO: indicate timeout?
                 pass
             else:
-                error_embed = discord.Embed(
-                    title='',
-                    timestamp=datetime.datetime.utcnow(),
-                    description=f'```py\n{exception}```\nSee log for details.',
-                    color=discord.Color.from_rgb(200, 0, 0),
+                error_message = await BaseCog.report_error(
+                        ctx,
+                        title='',
+                        message=f'```py\n{exception}```\nSee log for details.',
+                        footer=str(type(exception).__name__),
                 )
-                error_embed.set_author(
-                    name=str(ctx.message.author),
-                    icon_url=str(ctx.message.author.avatar_url),
-                )
-                error_embed.set_footer(text=str(type(exception).__name__))
-                error_message = await ctx.send(embed=error_embed)
                 # await error_message.add_reaction(COMMAND_DEBUG_REACTION)
                 # try:
                 #     reaction, user = await ctx.bot.wait_for(
@@ -115,4 +142,9 @@ class MechaBaozi:
                 # finally:
                 #     await error_message.remove_reaction(COMMAND_DEBUG_REACTION, ctx.bot.user)
         self.bot.event(on_command_error)
-        self.logger.info('Registered "on_command_error" method.')
+        self.log.info('Registered "on_command_error" method.')
+
+
+if __name__ == '__main__':
+    mb = MechaBaozi()
+    mb.run()

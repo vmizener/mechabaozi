@@ -1,13 +1,13 @@
 import csv
 import discord
 import json
-import logging
 import requests
 
 from discord.ext import commands
 
-from lib.globals import HERO_INFO_PATH, PLAYER_INFO_PATH
 from lib.base_cog import BaseCog
+from lib.globals import COMMAND_PREFIX, PLAYER_INFO_PATH
+from lib.globals import DOTACONSTANTS
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
 
@@ -20,7 +20,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def __init__(self, bot):
         super().__init__(bot)
         self.player_id_map = {}
-        with open(HERO_INFO_PATH, 'r') as fh:
+        with open(DOTACONSTANTS.HERO_INFO_PATH, 'r') as fh:
             self.hero_dict = json.load(fh)
         self.refresh_player_id_map()
 
@@ -38,12 +38,27 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         url = OPEN_DOTA_API_PATH + resource_path
         return json.loads(requests.request(method, url).text)
 
-    #@library_method
-    def lookup_player_id(self, player_name):
-        try:
-            player_id = self.player_id_map[player_name]
-        except KeyError:
-            msg = f'i don\'t know this "{player_name}" guy.'
+    # ---------------
+    # Commands
+    # ---------------
+
+    @commands.command(aliases=['lookup'])
+    async def lookup_players(self, ctx, *player_names):
+        """ Lookup someone's steam ID """
+        if not player_names:
+            await ctx.send('Uh, need a player name to lookup dude')
+            return
+        player_ids = []
+        bad_names = []
+        for player_name in player_names:
+            try:
+                player_ids.append(str(self.player_id_map[player_name]))
+            except KeyError:
+                bad_names.append(player_name)
+        msg = '\n'.join(player_ids)
+        if bad_names:
+            msg += f'\nUnknown name(s): {bad_names}'
+        await ctx.send(msg)
 
     @commands.command()
     async def lastmatch(self, ctx, player=None):

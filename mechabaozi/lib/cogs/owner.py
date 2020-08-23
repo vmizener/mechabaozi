@@ -1,3 +1,4 @@
+import datetime
 import discord
 import git
 import importlib
@@ -44,10 +45,11 @@ class OwnerCog(BaseCog, name="Owner"):
     async def update(self, ctx):
         """ Updates the bot environment and reloads it """
         if len(out := self.git.status('--porcelain')) > 0:
-            msg = f'Bot environment is not in a clean state!  Cannot automatically update!\n```{out}```'
-            self.log.error(msg)
-            await ctx.send(msg)
-            await ctx.message.add_reaction('👎')
+            await self.report_error(
+                ctx, 
+                title='Bad Environment State', 
+                message=f'Bot environment is not in a clean state!  Cannot automatically update!\n```{out}```',
+            )
             return
         response = self.git.pull()
         self.log.info(response)

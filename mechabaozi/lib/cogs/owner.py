@@ -133,7 +133,7 @@ class OwnerCog(BaseCog, name="Owner"):
     # Cog state commands
     # ---------------
 
-    @commands.command(name='load_extension', aliases=['load'], hidden=True)
+    @commands.command(name='load_extension', aliases=['l', 'load'], hidden=True)
     @commands.is_owner()
     async def load_extension(self, ctx, *, extension: str):
         """
@@ -152,7 +152,7 @@ class OwnerCog(BaseCog, name="Owner"):
             self.log.info(f'Loaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
-    @commands.command(name='unload_extension', aliases=['unload'], hidden=True)
+    @commands.command(name='unload_extension', aliases=['ul', 'unload'], hidden=True)
     @commands.is_owner()
     async def unload_extension(self, ctx, *, extension: str):
         """
@@ -173,19 +173,17 @@ class OwnerCog(BaseCog, name="Owner"):
 
     @commands.command(name='reload_extensions', aliases=['r', 'rl', 'reload'], hidden=True)
     @commands.is_owner()
-    async def reload_extensions(self, ctx, *, extensions: str=None):
+    async def reload_extensions(self, ctx, *extensions):
         """
         Unload, then reload the specified bot extensions, delmited by comma.
 
         Extension uses import path syntax (e.g. "lib.cogs.owner").
         """
-        if extensions is None:
+        if len(extensions) == 0:
             self.log.info('Reloading all extensions')
             extensions = STARTUP_EXTENSIONS
-        else:
-            extensions = [extension.strip(' ') for extension in extensions.split(',')]
         fail = False
-        for extension in STARTUP_EXTENSIONS:
+        for extension in extensions:
             try:
                 self.bot.reload_extension(extension)
             except (AttributeError, ImportError) as err:

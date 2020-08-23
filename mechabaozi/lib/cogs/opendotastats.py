@@ -16,6 +16,11 @@ OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
 def setup(bot):
     bot.add_cog(OpenDotaStatsCog(bot))
 
+def teardown(bot):
+    print('in teardown')
+    bot.get_cog('OpenDotaStats').write_player_id_map()
+    print('complete teardown')
+
 
 class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def __init__(self, bot):
@@ -24,6 +29,10 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         with open(DOTACONSTANTS.HERO_INFO_PATH, 'r') as fh:
             self.hero_dict = json.load(fh)
         self.refresh_player_id_map()
+
+    def __del__(self):
+        print('del')
+        self.write_player_id_map()
 
     def refresh_player_id_map(self):
         try:
@@ -34,6 +43,14 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                         self.player_id_map[player_name] = player_id
         except FileNotFoundError:
             open(PLAYER_INFO_PATH, 'w').close()
+
+    def write_player_id_map(self):
+        self.log.info("Writing player ID map")
+        with open(PLAYER_INFO_PATH, 'w') as fh:
+            writer = csv.writer(fh)
+            for player_name, player_id in self.player_id_map.items():
+                writer.writerow([player_name, player_id])
+        self.log.info("Wrote player ID map")
 
     def api_request(self, method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path
@@ -54,9 +71,9 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                ctx,
                message=f'I already have {player_name} registered to ID "{self.player_id_map[player_name]}".  Overwrite?',
             )
-            print(confirmation)
-        elif confirmation:
+        if confirmation:
             self.player_id_map[player_name] = steamid
+            await ctx.message.add_reaction(COMMAND_REACTION_APPROVE)
 
     @commands.command(aliases=['lookup'])
     async def lookup_players(self, ctx, *player_names):
@@ -87,13 +104,13 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             player_id = self.player_id_map[player_name]
         except KeyError:
             msg = 'i don\'t know this "{}" guy.'.format(player_name)
-            await self.bot.say(msg)
+            await ctx.send(msg)
             return
 
         j = self.api_request('GET', '/players/{}/recentMatches'.format(player_id))[0]
         hero = self.hero_dict[str(j['hero_id'])]['localized_name'].lower()
         team = 'Radiant' if j['player_slot'] < 128 else 'Dire'
         if bool(j['radiant_win']) and team == 'Radiant' or not bool(j['radiant_win']) and team == 'Dire':
-            await self.bot.say('grats on the w as {}'.format(hero))
+            await ctx.send('grats on the w as {}'.format(hero))
         else:
-            await self.bot.say('feeding as {} yet again'.format(hero))
+            await ctx.send('feeding as {} yet again'.format(hero))

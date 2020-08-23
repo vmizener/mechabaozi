@@ -13,6 +13,7 @@ def setup(bot):
 
 
 class GeneralCog(BaseCog, name="General"):
+    """ Contains general, commonly used commands """
 
     @commands.command()
     async def help(self, ctx, *, keyword=None):
@@ -37,7 +38,7 @@ class GeneralCog(BaseCog, name="General"):
             help_embed.description = \
                     f'Yo, use commands with the prefix `{COMMAND_PREFIX}`\n' \
                     f'E.g. `!hi` to say hi (or something)\n' \
-                    f'I\'ve listed all commands below; use `help <cog|command>` for more info'
+                    f'I\'ve listed all commands below; use `{COMMAND_PREFIX}help <cog|command>` for more info'
             cog_to_cmd_map = {}
             for cmd in self.bot.commands:
                 cog_name = cmd.cog.qualified_name
@@ -76,9 +77,22 @@ class GeneralCog(BaseCog, name="General"):
                     name='Aliases',
                     value=' | '.join([f'`{alias}`' for alias in command.aliases]),
                 )
+        elif cog := self.bot.get_cog(keyword):
+            help_embed.title = cog.qualified_name
+            help_embed.set_footer(text=f'help {cog.qualified_name}')
+            help_embed.description = cog.description
+            cog_cmd_fmt_list = []
+            for cmd in cog.get_commands():
+                if not cmd.hidden:
+                    cog_cmd_fmt_list.append(f'  • `{COMMAND_PREFIX}{cmd.name}` - {cmd.short_doc}')
+            help_embed.add_field(
+                name='Commands',
+                value='\n'.join(cog_cmd_fmt_list),
+                inline=False,
+            )
         else:
             # Report unknown input
-            help_embed.title = 'Unknown Command'
+            help_embed.title = 'Unknown Command or Cog Name'
             help_embed.description = \
-                    f'Yo, I dunno what `{keyword}` is.  Use `!help` for available options'
+                f'Yo, I dunno what `{keyword}` is.  Use `!help` for available options.\n(I\'m case-sensitive btw)'
         await ctx.send(embed=help_embed)

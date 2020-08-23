@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import discord
 import json
@@ -6,7 +7,7 @@ import requests
 from discord.ext import commands
 
 from lib.base_cog import BaseCog
-from lib.globals import COMMAND_PREFIX, PLAYER_INFO_PATH
+from lib.globals import COMMAND_PREFIX, COMMAND_REACTION_APPROVE, COMMAND_REACTION_DENY, PLAYER_INFO_PATH
 from lib.globals import DOTACONSTANTS
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
@@ -42,6 +43,21 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     # Commands
     # ---------------
 
+    @commands.command(aliases=['register'])
+    async def register_player(self, ctx, steamid, player_name=None):
+        """ Register someone's steam ID """
+        if not player_name:
+            player_name = ctx.message.author.display_name
+        confirmation = True
+        if player_name in self.player_id_map:
+            confirmation = await self.request_confirmation(
+               ctx,
+               message=f'I already have {player_name} registered to ID "{self.player_id_map[player_name]}".  Overwrite?',
+            )
+            print(confirmation)
+        elif confirmation:
+            self.player_id_map[player_name] = steamid
+
     @commands.command(aliases=['lookup'])
     async def lookup_players(self, ctx, *player_names):
         """ Lookup someone's steam ID """
@@ -61,16 +77,16 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         await ctx.send(msg)
 
     @commands.command()
-    async def lastmatch(self, ctx, player=None):
+    async def lastmatch(self, ctx, player_name=None):
         """
         the future is now
         """
-        if not player:
-            player = ctx.message.author.display_name
+        if not player_name:
+            player_name = ctx.message.author.display_name
         try:
-            player_id = self.player_id_map[player]
+            player_id = self.player_id_map[player_name]
         except KeyError:
-            msg = 'i don\'t know this "{}" guy.'.format(player)
+            msg = 'i don\'t know this "{}" guy.'.format(player_name)
             await self.bot.say(msg)
             return
 

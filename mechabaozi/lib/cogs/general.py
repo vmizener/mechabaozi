@@ -28,17 +28,17 @@ class GeneralCog(BaseCog, name="General"):
         :kwarg keyword str:     The cog or command name to get help on.  If empty, lists all commands organized by cog.
         """
         help_embed = discord.Embed(
-                timestamp=datetime.datetime.utcnow(),
-                color=discord.Color.dark_blue(),
+            timestamp=datetime.datetime.utcnow(),
+            color=discord.Color.dark_blue(),
         )
         help_embed.set_footer(text='help')
         if not keyword:
             # List all known commands, organized by cog
             help_embed.title='All Commands List'
             help_embed.description = \
-                    f'Yo, use commands with the prefix `{COMMAND_PREFIX}`\n' \
-                    f'E.g. `!hi` to say hi (or something)\n' \
-                    f'I\'ve listed all commands below; use `{COMMAND_PREFIX}help <cog|command>` for more info'
+                f'Yo, I\'ve listed all my commands below, organized by cog.\n' \
+                f'E.g. `{COMMAND_PREFIX}hi` to say hi (or something)\n' \
+                f'Use `{COMMAND_PREFIX}help <cog|command>` for more info'
             cog_to_cmd_map = {}
             for cmd in self.bot.commands:
                 cog_name = cmd.cog.qualified_name
@@ -47,9 +47,11 @@ class GeneralCog(BaseCog, name="General"):
                 cog_to_cmd_map[cog_name].append(cmd)
             for cog_name, cmd_list in sorted(cog_to_cmd_map.items()):
                 cog_cmd_fmt_list = []
-                for cmd in sorted(cmd_list, key=lambda cmd: str(cmd)):
-                    if not cmd.hidden:
-                        cog_cmd_fmt_list.append(f'  • `{COMMAND_PREFIX}{cmd.name}` - {cmd.short_doc}')
+                visible_commands = [cmd for cmd in cmd_list if not cmd.hidden]
+                if len(visible_commands) == 0:
+                    continue
+                for cmd in sorted(visible_commands, key=lambda cmd: str(cmd)):
+                    cog_cmd_fmt_list.append(f'  • `{COMMAND_PREFIX}{cmd.name}` - {cmd.short_doc}')
                 help_embed.add_field(
                     name=cog_name,
                     value='\n'.join(cog_cmd_fmt_list),
@@ -67,7 +69,7 @@ class GeneralCog(BaseCog, name="General"):
                 if len(visible_subcommands := [c for c in command.commands if not c.hidden]) > 0:
                     help_embed.add_field(
                         name='Subcommands',
-                        value=' | '.join([
+                        value='\n'.join([
                             f'  • `{COMMAND_PREFIX}{c.full_parent_name} {c.name}` - {c.short_doc}'
                             for c in visible_subcommands
                         ]),
@@ -78,6 +80,7 @@ class GeneralCog(BaseCog, name="General"):
                     value=' | '.join([f'`{alias}`' for alias in command.aliases]),
                 )
         elif cog := self.bot.get_cog(keyword):
+            # Display info on a specific cog
             help_embed.title = cog.qualified_name
             help_embed.set_footer(text=f'help {cog.qualified_name}')
             help_embed.description = cog.description
@@ -85,11 +88,12 @@ class GeneralCog(BaseCog, name="General"):
             for cmd in cog.get_commands():
                 if not cmd.hidden:
                     cog_cmd_fmt_list.append(f'  • `{COMMAND_PREFIX}{cmd.name}` - {cmd.short_doc}')
-            help_embed.add_field(
-                name='Commands',
-                value='\n'.join(cog_cmd_fmt_list),
-                inline=False,
-            )
+            if len(cog_cmd_fmt_list) > 0:
+                help_embed.add_field(
+                    name='Commands',
+                    value='\n'.join(cog_cmd_fmt_list),
+                    inline=False,
+                )
         else:
             # Report unknown input
             help_embed.title = 'Unknown Command or Cog Name'

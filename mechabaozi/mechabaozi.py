@@ -14,7 +14,7 @@ from lib.base_cog import BaseCog
 from lib.globals import \
     COMMAND_PREFIX, CLIENT_CONFIG_PATH, BOT_DESCRIPTION, \
     LOGFORMAT, LOGPATH,  STARTUP_EXTENSIONS, \
-    COMMAND_DEBUG_REACTION
+    COMMAND_REACTION_DEBUG
 
 
 class MechaBaozi:
@@ -108,10 +108,10 @@ class MechaBaozi:
                 pass
             else:
                 error_message = await BaseCog.report_error(
-                        ctx,
-                        title='',
-                        message=f'```py\n{exception}```\nSee log for details.',
-                        footer=str(type(exception).__name__),
+                    ctx,
+                    title='',
+                    message=f'```py\n{exception}```\nSee log for details.',
+                    footer=str(type(exception).__name__),
                 )
                 # await error_message.add_reaction(COMMAND_DEBUG_REACTION)
                 # try:

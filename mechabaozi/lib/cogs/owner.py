@@ -3,13 +3,17 @@ import discord
 import git
 import importlib
 import inspect
+import os
 import pprint
+import sys
+import time
 import traceback
 
 from discord.ext import commands
 
-import lib.globals as CONFIG
 from lib.base_cog import BaseCog
+from lib.globals import CLIENT_LAUNCHER_PATH, STARTUP_EXTENSIONS
+from lib.globals import COMMAND_REACTION_SUCCESS
 
 
 def setup(bot):
@@ -39,6 +43,18 @@ class OwnerCog(BaseCog, name="Owner"):
         await msg.add_reaction('👋')
         await self.bot.logout()
         self.log.info('Successfully disconnected')
+
+    @commands.command(name='restart')
+    @commands.is_owner()
+    async def restart(self, ctx):
+        """ Restarts the bot """
+        # TODO: clean this up, make safer
+        self.log.info('Restarting')
+        msg = await ctx.send('*Restarting*')
+        await self.bot.logout()
+        time.sleep(5)
+        #os.fsync()
+        os.execv(CLIENT_LAUNCHER_PATH, sys.argv)
 
     @commands.command(name='update', aliases=['up'])
     @commands.is_owner()
@@ -165,11 +181,11 @@ class OwnerCog(BaseCog, name="Owner"):
         """
         if extensions is None:
             self.log.info('Reloading all extensions')
-            extensions = CONFIG.STARTUP_EXTENSIONS
+            extensions = STARTUP_EXTENSIONS
         else:
             extensions = [extension.strip(' ') for extension in extensions.split(',')]
         fail = False
-        for extension in CONFIG.STARTUP_EXTENSIONS:
+        for extension in STARTUP_EXTENSIONS:
             try:
                 self.bot.reload_extension(extension)
             except (AttributeError, ImportError) as err:
@@ -188,6 +204,7 @@ class OwnerCog(BaseCog, name="Owner"):
     @commands.is_owner()
     async def flush_config(self, ctx):
         """ Reloads the global config module """
-        importlib.reload(CONFIG)
-        await ctx.message.add_reaction('👌')
+        config_module = importlib.import_module('lib.globals')
+        importlib.reload(config_module)
+        await ctx.message.add_reaction(COMMAND_REACTION_SUCCESS)
 

@@ -30,8 +30,10 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def __init__(self, bot):
         super().__init__(bot)
         self.player_id_map = {}
-        self._hero_dict = None
+        self._ability_id_map = None
+        self._ability_info_map = None
         self._game_mode_dict = None
+        self._hero_dict = None
         self.refresh_player_id_map()
 
     def __del__(self):
@@ -57,10 +59,16 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         self.log.info("Wrote player ID map")
 
     @property
-    def hero_dict(self):
-        if not self._hero_dict:
-            self._hero_dict = self.api_request('GET', '/constants/heroes')
-        return self._hero_dict
+    def ability_id_map(self):
+        if not self._ability_id_map:
+            self._ability_id_map = self.api_request('GET', '/constants/ability_ids')
+        return self._ability_id_map
+
+    @property
+    def ability_info_map(self):
+        if not self._ability_info_map:
+            self._ability_info_map = self.api_request('GET', '/constants/abilities')
+        return self._ability_info_map
 
     @property
     def game_mode_dict(self):
@@ -68,15 +76,46 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             self._game_mode_dict = self.api_request('GET', '/constants/game_mode')
         return self._game_mode_dict
 
+    @property
+    def hero_dict(self):
+        if not self._hero_dict:
+            self._hero_dict = self.api_request('GET', '/constants/heroes')
+        return self._hero_dict
+
     @staticmethod
     def api_request(method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path
         return json.loads(requests.request(method, url).text)
 
-    def parse_game_mode(self, match_data):
+    def parse_game_mode(self, match_id):
+        match_data = self.api_request('GET', f'/matches/{match_id}')
         game_mode_id = str(match_data['game_mode'])
         raw_name = self.game_mode_dict[game_mode_id]['name']
-        return ' '.join([word.capitalize() for word in raw_name[10:].split('_')])
+        parsed_name = ' '.join([word.capitalize() for word in raw_name[10:].split('_')])
+        if parsed_name == 'Ability Draft':
+            # Return dict of abilities mapped to player slot
+            info = {}
+            for player_data in match_data['players']:
+                player_slot = player_data['player_slot']
+                ability_upgrades = set(player_data['ability_upgrades_arr'])
+                player_ability_info = []
+                for ability_id in ability_upgrades:
+                    try:
+                        ability_name = self.ability_id_map[str(ability_id)]
+                    except KeyError:
+                        # Bad ability ID
+                        self.log.warning('Unknown ability parsed')
+                        continue
+                    if ability_name.startswith('special') or ability_name.startswith('ad_special'):
+                        # Ignore talents
+                        continue
+                    # TODO: use icons
+                    ability_info = self.ability_info_map[ability_name]
+                    player_ability_info.append(ability_info['dname'])
+                info[player_slot] = player_ability_info
+        else:
+            info = None
+        return parsed_name, info
 
     # ---------------
     # Commands
@@ -149,9 +188,13 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         else:
             embed.title = f'Defeat in {duration} as {hero}'
         embed.set_thumbnail(url=hero_icon)
+        game_mode, game_mode_info = self.parse_game_mode(match_id)
+        game_mode_embed_value = game_mode
+        if game_mode == 'Ability Draft':
+            game_mode_embed_value += ''.join([f'\n- {ability_name}' for ability_name in game_mode_info[player_slot]])
         embed.add_field(
             name='Game Mode',
-            value=f'{self.parse_game_mode(match_data)}',
+            value=game_mode_embed_value,
         )
         embed.add_field(
             name='KDA',

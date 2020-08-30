@@ -1,3 +1,0 @@
-[submodule "dotaconstants"]
-	path = include/dotaconstants
-	url = https://github.com/odota/dotaconstants.git

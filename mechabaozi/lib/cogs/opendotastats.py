@@ -11,10 +11,10 @@ from lib.base_cog import BaseCog
 from lib.globals import \
         COMMAND_PREFIX, COMMAND_REACTION_APPROVE, COMMAND_REACTION_DENY, COMMAND_REACTION_SUCCESS, \
         PLAYER_INFO_PATH
-from lib.globals import DOTACONSTANTS
 
 OPEN_DOTA_API_PATH = 'https://api.opendota.com/api'
 OPEN_DOTA_WEBSITE_PATH = 'https://www.opendota.com'
+STEAM_CDN_ADDRESS = 'https://steamcdn-a.akamaihd.net'
 
 
 def setup(bot):
@@ -30,10 +30,8 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def __init__(self, bot):
         super().__init__(bot)
         self.player_id_map = {}
-        with open(DOTACONSTANTS.HERO_INFO_PATH, 'r') as fh:
-            self.hero_dict = json.load(fh)
-        with open(DOTACONSTANTS.GAME_MODE_INFO_PATH, 'r') as fh:
-            self.game_mode_dict = json.load(fh)
+        self._hero_dict = None
+        self._game_mode_dict = None
         self.refresh_player_id_map()
 
     def __del__(self):
@@ -58,7 +56,20 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                 writer.writerow([player_name, player_id])
         self.log.info("Wrote player ID map")
 
-    def api_request(self, method, resource_path):
+    @property
+    def hero_dict(self):
+        if not self._hero_dict:
+            self._hero_dict = self.api_request('GET', '/constants/heroes')
+        return self._hero_dict
+
+    @property
+    def game_mode_dict(self):
+        if not self._game_mode_dict:
+            self._game_mode_dict = self.api_request('GET', '/constants/game_mode')
+        return self._game_mode_dict
+
+    @staticmethod
+    def api_request(method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path
         return json.loads(requests.request(method, url).text)
 
@@ -85,6 +96,8 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         if confirmation:
             self.player_id_map[player_name] = steamid
             await ctx.message.add_reaction(COMMAND_REACTION_SUCCESS)
+            # TODO: don't always write immediately
+            self.write_player_id_map()
 
     @commands.command(aliases=['lookup'])
     async def lookup_players(self, ctx, *player_names):
@@ -121,9 +134,10 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         match_id = match_data['match_id']
         hero_id = str(match_data['hero_id'])
         hero = self.hero_dict[hero_id]['localized_name']
-        hero_icon = DOTACONSTANTS.CDN_ADDRESS + self.hero_dict[hero_id]['icon']
+        hero_icon = STEAM_CDN_ADDRESS + self.hero_dict[hero_id]['icon']
         team = 'Radiant' if match_data['player_slot'] < 128 else 'Dire'
         game_date = datetime.datetime.fromtimestamp(int(match_data['start_time']))
+        player_slot = match_data['player_slot']
         embed = discord.Embed(
             timestamp=game_date,
             color=discord.Color.dark_blue(),

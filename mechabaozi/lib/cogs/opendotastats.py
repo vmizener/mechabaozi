@@ -32,6 +32,8 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         self.player_id_map = {}
         with open(DOTACONSTANTS.HERO_INFO_PATH, 'r') as fh:
             self.hero_dict = json.load(fh)
+        with open(DOTACONSTANTS.GAME_MODE_INFO_PATH, 'r') as fh:
+            self.game_mode_dict = json.load(fh)
         self.refresh_player_id_map()
 
     def __del__(self):
@@ -59,6 +61,11 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     def api_request(self, method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path
         return json.loads(requests.request(method, url).text)
+
+    def parse_game_mode(self, match_data):
+        game_mode_id = str(match_data['game_mode'])
+        raw_name = self.game_mode_dict[game_mode_id]['name']
+        return ' '.join([word.capitalize() for word in raw_name[10:].split('_')])
 
     # ---------------
     # Commands
@@ -107,8 +114,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         try:
             player_id = self.player_id_map[player_name]
         except KeyError:
-            msg = 'i don\'t know this "{}" guy.'.format(player_name)
-            await ctx.send(msg)
+            await ctx.send(f'I dunno this "{player_name}" guy.  Use `{COMMAND_PREFIX}register` to teach me')
             return
 
         match_data = self.api_request('GET', '/players/{}/recentMatches'.format(player_id))[0]
@@ -117,17 +123,22 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         hero = self.hero_dict[hero_id]['localized_name']
         hero_icon = DOTACONSTANTS.CDN_ADDRESS + self.hero_dict[hero_id]['icon']
         team = 'Radiant' if match_data['player_slot'] < 128 else 'Dire'
-        duration = str(datetime.timedelta(seconds=match_data['duration']))
+        game_date = datetime.datetime.fromtimestamp(int(match_data['start_time']))
         embed = discord.Embed(
-            timestamp=datetime.datetime.utcnow(),
+            timestamp=game_date,
             color=discord.Color.dark_blue(),
             description=f'[OpenDota match link]({OPEN_DOTA_WEBSITE_PATH}/matches/{match_id})',
         )
+        duration = str(datetime.timedelta(seconds=match_data['duration']))
         if bool(match_data['radiant_win']) and team == 'Radiant' or not bool(match_data['radiant_win']) and team == 'Dire':
             embed.title = f'Victory in {duration} as {hero}'
         else:
             embed.title = f'Defeat in {duration} as {hero}'
         embed.set_thumbnail(url=hero_icon)
+        embed.add_field(
+            name='Game Mode',
+            value=f'{self.parse_game_mode(match_data)}',
+        )
         embed.add_field(
             name='KDA',
             value=f"{match_data['kills']}/{match_data['deaths']}/{match_data['assists']}",

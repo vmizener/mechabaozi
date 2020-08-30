@@ -37,3 +37,4 @@ _extpath = os.path.join(_fabspath, '..', '..', 'include')
 class DOTACONSTANTS:
     CDN_ADDRESS = 'https://steamcdn-a.akamaihd.net'
     HERO_INFO_PATH = os.path.join(_extpath, 'dotaconstants/build/heroes.json') 
+    GAME_MODE_INFO_PATH = os.path.join(_extpath, 'dotaconstants/build/game_mode.json')

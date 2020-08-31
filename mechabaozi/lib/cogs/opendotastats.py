@@ -34,6 +34,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         self._ability_info_map = None
         self._game_mode_dict = None
         self._hero_dict = None
+        self._permanent_buff_map = None
         self.refresh_player_id_map()
 
     def __del__(self):
@@ -82,6 +83,12 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             self._hero_dict = self.api_request('GET', '/constants/heroes')
         return self._hero_dict
 
+    @property
+    def permanent_buff_map(self):
+        if not self._permanent_buff_map:
+            self._permanent_buff_map = self.api_request('GET', '/constants/permanent_buffs')
+        return self._permanent_buff_map
+
     @staticmethod
     def api_request(method, resource_path):
         url = OPEN_DOTA_API_PATH + resource_path
@@ -92,11 +99,12 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         game_mode_id = str(match_data['game_mode'])
         raw_name = self.game_mode_dict[game_mode_id]['name']
         parsed_name = ' '.join([word.capitalize() for word in raw_name[10:].split('_')])
-        if parsed_name == 'Ability Draft':
-            # Return dict of abilities mapped to player slot
-            info = {}
-            for player_data in match_data['players']:
-                player_slot = player_data['player_slot']
+        game_mode_info = {}
+        for player_data in match_data['players']:
+            player_slot = player_data['player_slot']
+            game_mode_info[player_slot] = {}
+            if parsed_name == 'Ability Draft':
+                # Return dict of abilities mapped to player slot
                 ability_upgrades = set(player_data['ability_upgrades_arr'])
                 player_ability_info = []
                 for ability_id in ability_upgrades:
@@ -112,10 +120,19 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                     # TODO: use icons
                     ability_info = self.ability_info_map[ability_name]
                     player_ability_info.append(ability_info['dname'])
-                info[player_slot] = player_ability_info
-        else:
-            info = None
-        return parsed_name, info
+                game_mode_info[player_slot]['abilities'] = player_ability_info
+            if player_data['permanent_buffs']:
+                game_mode_info[player_slot]['permanent_buffs'] = {}
+                for buff_info in player_data['permanent_buffs']:
+                    buff_id = buff_info['permanent_buff']
+                    stacks = buff_info['stack_count']
+                    try:
+                        buff_name = self.ability_info_map[self.permanent_buff_map[str(buff_id)]]['dname']
+                    except KeyError:
+                        buff_name = ' '.join([word.capitalize() for word in self.permanent_buff_map[str(buff_id)].split('_')])
+                    game_mode_info[player_slot]['permanent_buffs'][buff_name] = stacks
+                self.log.info(game_mode_info[player_slot]['permanent_buffs'])
+        return parsed_name, game_mode_info
 
     # ---------------
     # Commands
@@ -191,7 +208,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         game_mode, game_mode_info = self.parse_game_mode(match_id)
         game_mode_embed_value = game_mode
         if game_mode == 'Ability Draft':
-            game_mode_embed_value += ''.join([f'\n- {ability_name}' for ability_name in game_mode_info[player_slot]])
+            game_mode_embed_value += ''.join([f'\n- *{ability_name}*' for ability_name in game_mode_info[player_slot]['abilities']])
         embed.add_field(
             name='Game Mode',
             value=game_mode_embed_value,
@@ -200,4 +217,11 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             name='KDA',
             value=f"{match_data['kills']}/{match_data['deaths']}/{match_data['assists']}",
         )
+        if 'permanent_buffs' in game_mode_info[player_slot]:
+            buff_info = game_mode_info[player_slot]['permanent_buffs']
+            value = '\n'.join([f"*{buff_name}*: {stacks}" for buff_name, stacks in buff_info.items()])
+            embed.add_field(
+                name='Permanent Buffs',
+                value=value,
+            )
         await ctx.send(embed=embed)

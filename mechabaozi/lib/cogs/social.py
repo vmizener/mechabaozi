@@ -1,8 +1,8 @@
 import discord
 
-from discord.ext import commands
-
 from lib.base_cog import BaseCog
+from lib.command import command
+
 
 def setup(bot):
     bot.add_cog(SocialCog(bot))
@@ -10,7 +10,7 @@ def setup(bot):
 
 class SocialCog(BaseCog, name="Social"):
 
-    @commands.command(name='hi', aliases=['yo', 'hey', 'oy'])
+    @command(name='hi', aliases=['yo', 'hey', 'oy'])
     async def hi(self, ctx):
         """
         🏓 Ping pong 🏓

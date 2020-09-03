@@ -1,9 +1,8 @@
 import datetime
 import discord
 
-from discord.ext import commands
-
 from lib.globals import COMMAND_PREFIX
+from lib.command import command
 from lib.base_cog import BaseCog
 
 
@@ -15,7 +14,7 @@ def setup(bot):
 class GeneralCog(BaseCog, name="General"):
     """ Contains general, commonly used commands """
 
-    @commands.command()
+    @command()
     async def help(self, ctx, *, keyword=None):
         """
         Get helpful information on bot cogs and commands.

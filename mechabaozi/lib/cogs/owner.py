@@ -12,6 +12,7 @@ import traceback
 from discord.ext import commands
 
 from lib.base_cog import BaseCog
+from lib.command import command
 from lib.globals import CLIENT_LAUNCHER_PATH, STARTUP_EXTENSIONS
 from lib.globals import COMMAND_REACTION_SUCCESS
 
@@ -34,7 +35,7 @@ class OwnerCog(BaseCog, name="Owner"):
         super().__init__(bot)
         self.git = git.Git('.')
 
-    @commands.command(name='quit', aliases=['exit'])
+    @command(name='quit', aliases=['exit'])
     @commands.is_owner()
     async def quit(self, ctx):
         """ Stops the bot """
@@ -44,7 +45,7 @@ class OwnerCog(BaseCog, name="Owner"):
         await self.bot.logout()
         self.log.info('Successfully disconnected')
 
-    @commands.command(name='restart')
+    @command(name='restart')
     @commands.is_owner()
     async def restart(self, ctx):
         """ Restarts the bot """
@@ -56,7 +57,7 @@ class OwnerCog(BaseCog, name="Owner"):
         #os.fsync()
         os.execv(CLIENT_LAUNCHER_PATH, sys.argv)
 
-    @commands.command(name='update', aliases=['up'])
+    @command(name='update', aliases=['up'])
     @commands.is_owner()
     async def update(self, ctx):
         """ Updates the bot environment and reloads it """
@@ -75,7 +76,7 @@ class OwnerCog(BaseCog, name="Owner"):
         else:
             await self.reload_extensions(ctx)
 
-    @commands.command(name='eval', aliases=['debug'], hidden=True)
+    @command(name='eval', aliases=['debug'], hidden=True)
     @commands.is_owner()
     async def eval(self, ctx, *, code: str):
         """
@@ -133,7 +134,7 @@ class OwnerCog(BaseCog, name="Owner"):
     # Cog state commands
     # ---------------
 
-    @commands.command(name='load_extension', aliases=['l', 'load'], hidden=True)
+    @command(name='load_extension', aliases=['l', 'load'], hidden=True)
     @commands.is_owner()
     async def load_extension(self, ctx, *, extension: str):
         """
@@ -152,7 +153,7 @@ class OwnerCog(BaseCog, name="Owner"):
             self.log.info(f'Loaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
-    @commands.command(name='unload_extension', aliases=['ul', 'unload'], hidden=True)
+    @command(name='unload_extension', aliases=['ul', 'unload'], hidden=True)
     @commands.is_owner()
     async def unload_extension(self, ctx, *, extension: str):
         """
@@ -171,7 +172,7 @@ class OwnerCog(BaseCog, name="Owner"):
             self.log.info(f'Unloaded extension "{extension}"')
             await ctx.message.add_reaction('👌')
 
-    @commands.command(name='reload_extensions', aliases=['r', 'rl', 'reload'], hidden=True)
+    @command(name='reload_extensions', aliases=['r', 'rl', 'reload'], hidden=True)
     @commands.is_owner()
     async def reload_extensions(self, ctx, *extensions):
         """
@@ -198,7 +199,7 @@ class OwnerCog(BaseCog, name="Owner"):
         else:
            await ctx.message.add_reaction('👌')
 
-    @commands.command(name='flush_config', aliases=['flush'], hidden=True)
+    @command(name='flush_config', aliases=['flush'], hidden=True)
     @commands.is_owner()
     async def flush_config(self, ctx):
         """ Reloads the global config module """

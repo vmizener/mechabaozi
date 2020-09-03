@@ -8,6 +8,7 @@ import requests
 from discord.ext import commands
 
 from lib.base_cog import BaseCog
+from lib.command import command
 from lib.globals import \
         COMMAND_PREFIX, COMMAND_REACTION_APPROVE, COMMAND_REACTION_DENY, COMMAND_REACTION_SUCCESS, \
         PLAYER_INFO_PATH
@@ -129,7 +130,9 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
                     try:
                         buff_name = self.ability_info_map[self.permanent_buff_map[str(buff_id)]]['dname']
                     except KeyError:
-                        buff_name = ' '.join([word.capitalize() for word in self.permanent_buff_map[str(buff_id)].split('_')])
+                        buff_name = ' '.join(
+                            [word.capitalize() for word in self.permanent_buff_map[str(buff_id)].split('_')]
+                        )
                     game_mode_info[player_slot]['permanent_buffs'][buff_name] = stacks
                 self.log.info(game_mode_info[player_slot]['permanent_buffs'])
         return parsed_name, game_mode_info
@@ -138,7 +141,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
     # Commands
     # ---------------
 
-    @commands.command(aliases=['register'])
+    @command(aliases=['register'])
     async def register_player(self, ctx, steamid, player_name=None):
         """ Register someone's steam ID """
         if not player_name:
@@ -155,7 +158,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             # TODO: don't always write immediately
             self.write_player_id_map()
 
-    @commands.command(aliases=['lookup'])
+    @command(aliases=['lookup'])
     async def lookup_players(self, ctx, *player_names):
         """ Lookup someone's steam ID """
         if not player_names:
@@ -173,7 +176,7 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
             msg += f'\nUnknown name(s): {bad_names}\nUse `{COMMAND_PREFIX}register to teach me'
         await ctx.send(msg)
 
-    @commands.command()
+    @command()
     async def lastmatch(self, ctx, player_name=None):
         """
         the future is now
@@ -208,7 +211,9 @@ class OpenDotaStatsCog(BaseCog, name="OpenDotaStats"):
         game_mode, game_mode_info = self.parse_game_mode(match_id)
         game_mode_embed_value = game_mode
         if game_mode == 'Ability Draft':
-            game_mode_embed_value += ''.join([f'\n- *{ability_name}*' for ability_name in game_mode_info[player_slot]['abilities']])
+            game_mode_embed_value += ''.join(
+                [f'\n- *{ability_name}*' for ability_name in game_mode_info[player_slot]['abilities']]
+            )
         embed.add_field(
             name='Game Mode',
             value=game_mode_embed_value,

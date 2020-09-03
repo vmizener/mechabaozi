@@ -20,7 +20,7 @@ STARTUP_EXTENSIONS = [
     'lib.cogs.social',
 ]
 
-LOGFORMAT = '//@%(asctime)s [%(levelname)s] %(name)s\n%(message)s'
+LOGFORMAT = '%(asctime)s [%(levelname)s] %(name)s >>> %(message)s'
 LOGPATH = f'/tmp/mechabaozi_logs/{time.strftime("%Y%m%d-%H%M%S")}.discord.log'
 if not os.path.exists(os.path.dirname(LOGPATH)):
     os.makedirs(os.path.dirname(LOGPATH))

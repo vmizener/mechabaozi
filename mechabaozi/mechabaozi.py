@@ -12,14 +12,14 @@ from discord.ext import commands
 
 from lib.base_cog import BaseCog
 from lib.globals import \
-    COMMAND_PREFIX, CLIENT_CONFIG_PATH, BOT_DESCRIPTION, \
+    COMMAND_PREFIX, CLIENT_CONFIG_PATH, BOT_DESCRIPTION, DEFAULT_LOGGER, \
     LOGFORMAT, LOGPATH,  STARTUP_EXTENSIONS, \
     COMMAND_REACTION_DEBUG
 
 
 class MechaBaozi:
     def __init__(self, *, client_config_path=CLIENT_CONFIG_PATH, log_level=logging.INFO):
-        self.log = logging.getLogger("mechabaozi")
+        self.log = logging.getLogger(DEFAULT_LOGGER)
         self.log.info('Initializing.')
 
         log_path = LOGPATH

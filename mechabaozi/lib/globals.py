@@ -4,6 +4,7 @@ import time
 
 
 BOT_DESCRIPTION = 'Baozi of the less edible variety'
+DEFAULT_LOGGER = 'mechabaozi'
 COMMAND_PREFIX = '!'
 
 COMMAND_REACTION_DEBUG = '\N{WHITE QUESTION MARK ORNAMENT}'
